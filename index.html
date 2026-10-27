@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101116">
+  <title>Valorant Shop Tracker</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; padding: 20px;
+      background: #101116; color: #f5f5f7;
+      font-family: -apple-system, Arial, sans-serif;
+    }
+    h1 { color: #ff4655; font-size: 27px; }
+    .sub { color: #aaa; }
+    .timer, .skin {
+      background: #1c1d26; border-radius: 14px;
+      padding: 16px; margin: 14px 0;
+    }
+    .timer { border: 1px solid #39303a; }
+    .skins {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .skin { margin: 0; min-width: 0; }
+    .skin h3 { font-size: 15px; overflow-wrap: anywhere; }
+    .price { color: #ffd166; font-weight: bold; }
+    button {
+      border: 0; border-radius: 9px; padding: 10px;
+      background: #ff4655; color: white;
+      font-weight: bold; cursor: pointer;
+    }
+    .skin button { width: 100%; }
+    .saved { background: #383945; }
+    .tag { color: #aaa; font-size: 12px; }
+    footer { margin-top: 25px; color: #888; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <h1>VALORANT SHOP</h1>
+  <p class="sub">Dein täglicher Shop-Tracker</p>
+
+  <section class="timer">
+    <div class="tag">Nächster täglicher Shop-Reset</div>
+    <h2 id="timer">--:--:--</h2>
+    <div class="tag">Countdown bis Mitternacht</div>
+  </section>
+
+  <h2>Meine Wunschliste</h2>
+  <p class="sub">Speichere Skins, die du haben möchtest.</p>
+  <div id="wishlist"></div>
+
+  <h2>Skin-Katalog</h2>
+  <div class="skins" id="skins"></div>
+
+  <footer>
+    Demo-Version mit Beispieldaten. Keine Verbindung zum
+    echten Riot-Shop. Preise und Angebote sind nicht live.
+  </footer>
+
+  <script>
+    const items = [
+      { name: "Reaver Vandal", price: 1775, type: "Vandal" },
+      { name: "Prime Vandal", price: 1775, type: "Vandal" },
+      { name: "Ion Phantom", price: 1775, type: "Phantom" },
+      { name: "RGX Blade", price: 4350, type: "Nahkampf" },
+      { name: "Oni Phantom", price: 1775, type: "Phantom" },
+      { name: "Prelude to Chaos Vandal", price: 2175, type: "Vandal" },
+      { name: "Kurona Vandal", price: 2175, type: "Vandal" },
+      { name: "Gaia's Vengeance", price: 1775, type: "Vandal" }
+    ];
+
+    let wishlist = [];
+    try {
+      wishlist = JSON.parse(
+        localStorage.getItem("valorant-wishlist") || "[]"
+      );
+      if (!Array.isArray(wishlist)) wishlist = [];
+    } catch (e) {
+      wishlist = [];
+    }
+
+    function save() {
+      try {
+        localStorage.setItem(
+          "valorant-wishlist", JSON.stringify(wishlist)
+        );
+      } catch (e) {}
+      render();
+    }
+
+    function toggle(name) {
+      wishlist = wishlist.includes(name)
+        ? wishlist.filter(x => x !== name)
+        : [...wishlist, name];
+      save();
+    }
+
+    function card(item) {
+      const saved = wishlist.includes(item.name);
+      return `
+        <article class="skin">
+          <div class="tag">${item.type}</div>
+          <h3>${item.name}</h3>
+          <p class="price">${item.price.toLocaleString("de-DE")} VP</p>
+          <button class="${saved ? "saved" : ""}"
+            data-name="${encodeURIComponent(item.name)}">
+            ${saved ? "★ Gespeichert" : "☆ Merken"}
+          </button>
+        </article>`;
+    }
+
+    function render() {
+      document.getElementById("skins").innerHTML =
+        items.map(card).join("");
+
+      const savedItems = items.filter(
+        item => wishlist.includes(item.name)
+      );
+      document.getElementById("wishlist").innerHTML =
+        savedItems.length
+          ? `<div class="skins">${savedItems.map(card).join("")}</div>`
+          : `<p class="sub">Noch keine Skins gespeichert.</p>`;
+
+      document.querySelectorAll("button[data-name]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          toggle(decodeURIComponent(btn.dataset.name));
+        });
+      });
+    }
+
+    function updateTimer() {
+      const now = new Date();
+      const midnight = new Date(now);
+      midnight.setHours(24, 0, 0, 0);
+      const seconds = Math.max(
+        0, Math.floor((midnight - now) / 1000)
+      );
+      const h = String(Math.floor(seconds / 3600)).padStart(2, "0");
+      const m = String(Math.floor((seconds % 3600) / 60)).padStart(2, "0");
+      const s = String(seconds % 60).padStart(2, "0");
+      document.getElementById("timer").textContent = `${h}:${m}:${s}`;
+    }
+
+    render();
+    updateTimer();
+    setInterval(updateTimer, 1000);
+  </script>
+</body>
+</html>
