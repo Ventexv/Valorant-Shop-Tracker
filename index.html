@@ -2,151 +2,614 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#101116">
-  <title>Valorant Shop Tracker</title>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <link rel="manifest" href="./manifest.json">
+  <title>VALORANT // SHOP TRACKER</title>
+
   <style>
+    :root {
+      --bg: #101116;
+      --panel: #1a1b22;
+      --panel2: #22232c;
+      --red: #ff4655;
+      --white: #f5f5f7;
+      --muted: #a2a3ae;
+      --line: #393943;
+      --gold: #ffd166;
+    }
+
     * { box-sizing: border-box; }
+
     body {
-      margin: 0; padding: 20px;
-      background: #101116; color: #f5f5f7;
-      font-family: -apple-system, Arial, sans-serif;
+      margin: 0;
+      background:
+        radial-gradient(ellipse at 100% 0%, #32151c 0, transparent 36%),
+        var(--bg);
+      color: var(--white);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      padding: 0 0 calc(30px + env(safe-area-inset-bottom));
     }
-    h1 { color: #ff4655; font-size: 27px; }
-    .sub { color: #aaa; }
-    .timer, .skin {
-      background: #1c1d26; border-radius: 14px;
-      padding: 16px; margin: 14px 0;
+
+    button, select, input { font: inherit; }
+    button { cursor: pointer; }
+
+    .topbar {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      background: rgba(16,17,22,.92);
     }
-    .timer { border: 1px solid #39303a; }
-    .skins {
+
+    .brand {
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: 2px;
+    }
+
+    .brand span { color: var(--red); }
+
+    .status {
+      color: #ffb5bb;
+      border: 1px solid #77323b;
+      padding: 6px 8px;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 1px;
+    }
+
+    main {
+      width: min(100% - 28px, 760px);
+      margin: auto;
+    }
+
+    .hero { padding: 28px 0 18px; }
+
+    .eyebrow {
+      color: var(--red);
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 2px;
+    }
+
+    h1 {
+      margin: 8px 0;
+      font-size: clamp(29px, 8vw, 44px);
+      line-height: .98;
+      letter-spacing: -1.5px;
+    }
+
+    h1 span { color: var(--red); }
+
+    .muted { color: var(--muted); line-height: 1.5; }
+    .small { font-size: 12px; }
+
+    .timer-panel {
+      background: linear-gradient(120deg, #27181e, #1b1b23 75%);
+      border: 1px solid #67303a;
+      padding: 17px;
+      margin: 14px 0 25px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .timer-panel::after {
+      content: "V";
+      position: absolute;
+      right: 10px;
+      top: -25px;
+      font-size: 110px;
+      font-weight: 1000;
+      color: rgba(255,70,85,.07);
+      pointer-events: none;
+    }
+
+    .timer {
+      font-size: 30px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      margin: 9px 0 3px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .section-head {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 10px;
+      margin: 27px 0 12px;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: -.4px;
+    }
+
+    .count {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .shop-grid, .skin-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 12px;
+      gap: 11px;
     }
-    .skin { margin: 0; min-width: 0; }
-    .skin h3 { font-size: 15px; overflow-wrap: anywhere; }
-    .price { color: #ffd166; font-weight: bold; }
-    button {
-      border: 0; border-radius: 9px; padding: 10px;
-      background: #ff4655; color: white;
-      font-weight: bold; cursor: pointer;
+
+    .skin-card {
+      min-width: 0;
+      overflow: hidden;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 0 100%);
     }
-    .skin button { width: 100%; }
-    .saved { background: #383945; }
-    .tag { color: #aaa; font-size: 12px; }
-    footer { margin-top: 25px; color: #888; font-size: 12px; }
+
+    .skin-art {
+      height: 100px;
+      padding: 12px;
+      background:
+        linear-gradient(135deg, rgba(255,70,85,.18), transparent 58%),
+        repeating-linear-gradient(135deg, #24252e 0 12px, #20212a 12px 24px);
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 6px;
+    }
+
+    .weapon-symbol {
+      font-size: 27px;
+      font-weight: 1000;
+      font-style: italic;
+      color: var(--red);
+      text-shadow: 0 0 22px #ff465544;
+    }
+
+    .weapon-type {
+      font-size: 9px;
+      color: #dedee4;
+      letter-spacing: 1px;
+      text-align: right;
+    }
+
+    .skin-info { padding: 12px; }
+
+    .skin-name {
+      font-size: 14px;
+      font-weight: 850;
+      line-height: 1.3;
+      overflow-wrap: anywhere;
+      min-height: 36px;
+      margin: 0 0 6px;
+    }
+
+    .skin-price {
+      color: var(--gold);
+      font-size: 13px;
+      font-weight: 900;
+      margin-bottom: 12px;
+    }
+
+    .btn {
+      border: 0;
+      background: var(--red);
+      color: white;
+      font-weight: 850;
+      padding: 11px 10px;
+      min-height: 40px;
+      font-size: 12px;
+    }
+
+    .btn.secondary {
+      background: #343540;
+      color: var(--white);
+      border: 1px solid #494a55;
+    }
+
+    .btn.outline {
+      background: transparent;
+      border: 1px solid #6e3940;
+      color: #ffb5bb;
+    }
+
+    .btn:active { transform: scale(.98); }
+    .skin-info .btn { width: 100%; }
+
+    .slot {
+      background: var(--panel);
+      border: 1px dashed #55515b;
+      min-height: 120px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 12px;
+    }
+
+    .slot.filled {
+      border-style: solid;
+      border-color: #71343d;
+      display: block;
+      text-align: left;
+      padding: 0;
+    }
+
+    .slot .skin-info { padding: 10px; }
+    .slot .skin-art { height: 65px; }
+    .slot .skin-name { min-height: 0; font-size: 12px; }
+    .slot .skin-price { margin-bottom: 8px; }
+
+    .form-panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      padding: 14px;
+      margin-top: 12px;
+    }
+
+    label {
+      display: block;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    select, input {
+      width: 100%;
+      background: #111218;
+      border: 1px solid #494a55;
+      color: white;
+      padding: 12px;
+      border-radius: 0;
+      margin-bottom: 11px;
+      min-height: 44px;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+    }
+
+    .form-row select { min-width: 0; }
+    .form-row .btn { min-height: 44px; }
+
+    .empty {
+      border: 1px dashed var(--line);
+      color: var(--muted);
+      text-align: center;
+      padding: 20px 12px;
+      font-size: 13px;
+      line-height: 1.5;
+      grid-column: 1 / -1;
+    }
+
+    .notice {
+      border-left: 3px solid var(--red);
+      padding: 12px;
+      background: #1a1b22;
+      font-size: 12px;
+      color: #c7c7d0;
+      line-height: 1.6;
+      margin-top: 24px;
+    }
+
+    .notice strong { color: white; }
+
+    .footer {
+      padding: 25px 0 10px;
+      color: #777985;
+      font-size: 11px;
+      line-height: 1.6;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: calc(18px + env(safe-area-inset-bottom));
+      left: 14px;
+      right: 14px;
+      max-width: 480px;
+      margin: auto;
+      padding: 13px;
+      background: #f5f5f7;
+      color: #101116;
+      font-weight: 800;
+      font-size: 13px;
+      z-index: 5;
+      display: none;
+    }
+
+    .toast.show { display: block; }
+
+    @media (min-width: 600px) {
+      .shop-grid, .skin-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .skin-art { height: 125px; }
+    }
   </style>
 </head>
+
 <body>
-  <h1>VALORANT SHOP</h1>
-  <p class="sub">Dein täglicher Shop-Tracker</p>
+  <header class="topbar">
+    <div class="brand">V<span>//</span> TRACKER</div>
+    <div class="status">PERSONAL TRACKER</div>
+  </header>
 
-  <section class="timer">
-    <div class="tag">Nächster täglicher Shop-Reset</div>
-    <h2 id="timer">--:--:--</h2>
-    <div class="tag">Countdown bis Mitternacht</div>
-  </section>
+  <main>
+    <section class="hero">
+      <div class="eyebrow">YOUR DAILY ARMORY</div>
+      <h1>VALORANT<br><span>SHOP TRACKER</span></h1>
+      <p class="muted">Deine Wunschskins. Dein Überblick. Dein Shop.</p>
+    </section>
 
-  <h2>Meine Wunschliste</h2>
-  <p class="sub">Speichere Skins, die du haben möchtest.</p>
-  <div id="wishlist"></div>
+    <section class="timer-panel">
+      <div class="eyebrow">NEXT DAILY RESET</div>
+      <div class="timer" id="timer">--:--:--</div>
+      <div class="muted small">Countdown bis Mitternacht deiner Gerätezeit</div>
+    </section>
 
-  <h2>Skin-Katalog</h2>
-  <div class="skins" id="skins"></div>
+    <section>
+      <div class="section-head">
+        <h2>HEUTIGER SHOP</h2>
+        <span class="count" id="shop-count">0 / 4 Slots</span>
+      </div>
+      <p class="muted small">
+        Trage hier deine vier Angebote aus dem Spiel ein.
+        Diese Liste wird nicht automatisch von Riot abgerufen.
+      </p>
+      <div class="shop-grid" id="shop-grid"></div>
 
-  <footer>
-    Demo-Version mit Beispieldaten. Keine Verbindung zum
-    echten Riot-Shop. Preise und Angebote sind nicht live.
-  </footer>
+      <div class="form-panel">
+        <label for="shop-select">Angebot zu einem freien Slot hinzufügen</label>
+        <select id="shop-select"></select>
+        <button class="btn" id="add-shop" type="button">+ ZUM HEUTIGEN SHOP HINZUFÜGEN</button>
+        <p class="muted small">Du kannst maximal vier verschiedene Skins eintragen.</p>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-head">
+        <h2>MEINE WUNSCHLISTE</h2>
+        <span class="count" id="wish-count">0 Skins</span>
+      </div>
+      <div class="skin-grid" id="wishlist-grid"></div>
+    </section>
+
+    <section>
+      <div class="section-head">
+        <h2>SKIN-KATALOG</h2>
+        <span class="count">BEISPIELE</span>
+      </div>
+      <div class="skin-grid" id="catalog-grid"></div>
+    </section>
+
+    <div class="notice">
+      <strong>Hinweis zu Shop-Daten</strong><br>
+      Dies ist eine unabhängige Fan-App. Die Shop-Einträge werden von dir
+      selbst eingetragen und lokal auf diesem Browser gespeichert.
+      Katalog und Preise sind Beispieldaten und können unvollständig sein.
+      Keine Verbindung zu deinem Riot-Konto.
+    </div>
+
+    <footer class="footer">
+      Nicht offiziell mit Riot Games verbunden. VALORANT und zugehörige
+      Inhalte sind Eigentum ihrer jeweiligen Rechteinhaber.
+    </footer>
+  </main>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <script>
-    const items = [
-      { name: "Reaver Vandal", price: 1775, type: "Vandal" },
-      { name: "Prime Vandal", price: 1775, type: "Vandal" },
-      { name: "Ion Phantom", price: 1775, type: "Phantom" },
-      { name: "RGX Blade", price: 4350, type: "Nahkampf" },
-      { name: "Oni Phantom", price: 1775, type: "Phantom" },
-      { name: "Prelude to Chaos Vandal", price: 2175, type: "Vandal" },
-      { name: "Kurona Vandal", price: 2175, type: "Vandal" },
-      { name: "Gaia's Vengeance", price: 1775, type: "Vandal" }
+    const skins = [
+      { id: "reaver-vandal", name: "Reaver Vandal", type: "VANDAL", price: 1775, symbol: "V" },
+      { id: "prime-vandal", name: "Prime Vandal", type: "VANDAL", price: 1775, symbol: "V" },
+      { id: "oni-phantom", name: "Oni Phantom", type: "PHANTOM", price: 1775, symbol: "P" },
+      { id: "ion-phantom", name: "Ion Phantom", type: "PHANTOM", price: 1775, symbol: "P" },
+      { id: "rgx-blade", name: "RGX Blade", type: "MELEE", price: 4350, symbol: "✦" },
+      { id: "kuronami-vandal", name: "Kuronami Vandal", type: "VANDAL", price: 2175, symbol: "V" },
+      { id: "gaia-vandal", name: "Gaia's Vengeance", type: "VANDAL", price: 1775, symbol: "V" },
+      { id: "prime-karambit", name: "Prime Karambit", type: "MELEE", price: 3550, symbol: "✦" },
+      { id: "singularity-sheriff", name: "Singularity Sheriff", type: "SHERIFF", price: 2175, symbol: "S" },
+      { id: "elderflame-operator", name: "Elderflame Operator", type: "OPERATOR", price: 2475, symbol: "O" },
+      { id: "reaver-sheriff", name: "Reaver Sheriff", type: "SHERIFF", price: 1775, symbol: "S" },
+      { id: "glitchpop-phantom", name: "Glitchpop Phantom", type: "PHANTOM", price: 2175, symbol: "P" }
     ];
 
-    let wishlist = [];
-    try {
-      wishlist = JSON.parse(
-        localStorage.getItem("valorant-wishlist") || "[]"
-      );
-      if (!Array.isArray(wishlist)) wishlist = [];
-    } catch (e) {
-      wishlist = [];
-    }
+    const STORAGE_KEY = "valorant-tracker-v2";
 
-    function save() {
+    function readState() {
       try {
-        localStorage.setItem(
-          "valorant-wishlist", JSON.stringify(wishlist)
-        );
-      } catch (e) {}
-      render();
+        const raw = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+        return {
+          wishlist: Array.isArray(raw.wishlist)
+            ? raw.wishlist.filter(id => skins.some(s => s.id === id))
+            : [],
+          shop: Array.isArray(raw.shop)
+            ? raw.shop.filter(id => skins.some(s => s.id === id)).slice(0, 4)
+            : []
+        };
+      } catch (e) {
+        return { wishlist: [], shop: [] };
+      }
     }
 
-    function toggle(name) {
-      wishlist = wishlist.includes(name)
-        ? wishlist.filter(x => x !== name)
-        : [...wishlist, name];
-      save();
+    let state = readState();
+
+    function persist() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      } catch (e) {
+        toast("Speichern nicht möglich. Prüfe die Browsereinstellungen.");
+      }
     }
 
-    function card(item) {
-      const saved = wishlist.includes(item.name);
+    function escapeHTML(value) {
+      return String(value).replace(/[&<>"']/g, char => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+      })[char]);
+    }
+
+    function getSkin(id) {
+      return skins.find(skin => skin.id === id);
+    }
+
+    function card(skin, area) {
+      const saved = state.wishlist.includes(skin.id);
       return `
-        <article class="skin">
-          <div class="tag">${item.type}</div>
-          <h3>${item.name}</h3>
-          <p class="price">${item.price.toLocaleString("de-DE")} VP</p>
-          <button class="${saved ? "saved" : ""}"
-            data-name="${encodeURIComponent(item.name)}">
-            ${saved ? "★ Gespeichert" : "☆ Merken"}
-          </button>
+        <article class="skin-card">
+          <div class="skin-art">
+            <span class="weapon-symbol">${escapeHTML(skin.symbol)}</span>
+            <span class="weapon-type">${escapeHTML(skin.type)}</span>
+          </div>
+          <div class="skin-info">
+            <h3 class="skin-name">${escapeHTML(skin.name)}</h3>
+            <div class="skin-price">${skin.price.toLocaleString("de-DE")} VP</div>
+            <button class="btn ${saved ? "secondary" : ""}"
+              type="button" data-action="wish" data-id="${skin.id}">
+              ${saved ? "★ GESPEICHERT" : "☆ MERKEN"}
+            </button>
+            ${area === "shop" ? `
+              <button class="btn outline" style="width:100%;margin-top:7px"
+                type="button" data-action="remove-shop" data-id="${skin.id}">
+                AUS SHOP ENTFERNEN
+              </button>` : ""}
+          </div>
         </article>`;
     }
 
-    function render() {
-      document.getElementById("skins").innerHTML =
-        items.map(card).join("");
+    function renderShop() {
+      const grid = document.getElementById("shop-grid");
+      const count = document.getElementById("shop-count");
+      count.textContent = `${state.shop.length} / 4 Slots`;
 
-      const savedItems = items.filter(
-        item => wishlist.includes(item.name)
-      );
-      document.getElementById("wishlist").innerHTML =
-        savedItems.length
-          ? `<div class="skins">${savedItems.map(card).join("")}</div>`
-          : `<p class="sub">Noch keine Skins gespeichert.</p>`;
+      if (!state.shop.length) {
+        grid.innerHTML = `<div class="empty">
+          Noch keine Angebote eingetragen.<br>
+          Wähle unten deine heutigen Skins aus.
+        </div>`;
+      } else {
+        grid.innerHTML = state.shop.map(id => {
+          const skin = getSkin(id);
+          return skin ? card(skin, "shop") : "";
+        }).join("");
+      }
 
-      document.querySelectorAll("button[data-name]").forEach(btn => {
-        btn.addEventListener("click", () => {
-          toggle(decodeURIComponent(btn.dataset.name));
-        });
-      });
+      const select = document.getElementById("shop-select");
+      const available = skins.filter(skin => !state.shop.includes(skin.id));
+      select.innerHTML = available.map(skin =>
+        `<option value="${skin.id}">${escapeHTML(skin.name)} — ${skin.price.toLocaleString("de-DE")} VP</option>`
+      ).join("");
+
+      document.getElementById("add-shop").disabled =
+        state.shop.length >= 4 || available.length === 0;
+      document.getElementById("add-shop").style.opacity =
+        state.shop.length >= 4 || available.length === 0 ? ".45" : "1";
     }
+
+    function renderWishlist() {
+      const selected = state.wishlist.map(getSkin).filter(Boolean);
+      document.getElementById("wish-count").textContent =
+        `${selected.length} ${selected.length === 1 ? "Skin" : "Skins"}`;
+
+      document.getElementById("wishlist-grid").innerHTML =
+        selected.length
+          ? selected.map(skin => card(skin, "wishlist")).join("")
+          : `<div class="empty">Deine Wunschliste ist noch leer.<br>Merke dir unten deine Lieblingsskins.</div>`;
+    }
+
+    function renderCatalog() {
+      document.getElementById("catalog-grid").innerHTML =
+        skins.map(skin => card(skin, "catalog")).join("");
+    }
+
+    function render() {
+      renderShop();
+      renderWishlist();
+      renderCatalog();
+    }
+
+    function toast(message) {
+      const el = document.getElementById("toast");
+      el.textContent = message;
+      el.classList.add("show");
+      clearTimeout(toast.timeout);
+      toast.timeout = setTimeout(() => el.classList.remove("show"), 2400);
+    }
+
+    document.addEventListener("click", event => {
+      const button = event.target.closest("button[data-action]");
+      if (!button) return;
+
+      const id = button.dataset.id;
+      const action = button.dataset.action;
+
+      if (action === "wish") {
+        if (state.wishlist.includes(id)) {
+          state.wishlist = state.wishlist.filter(item => item !== id);
+          toast("Aus der Wunschliste entfernt");
+        } else {
+          state.wishlist.push(id);
+          toast("Zur Wunschliste hinzugefügt");
+        }
+      }
+
+      if (action === "remove-shop") {
+        state.shop = state.shop.filter(item => item !== id);
+        toast("Angebot aus dem Shop entfernt");
+      }
+
+      persist();
+      render();
+    });
+
+    document.getElementById("add-shop").addEventListener("click", () => {
+      const id = document.getElementById("shop-select").value;
+
+      if (state.shop.length >= 4) {
+        toast("Dein Shop hat bereits vier Slots.");
+        return;
+      }
+
+      if (!id || state.shop.includes(id)) {
+        toast("Wähle bitte einen noch nicht eingetragenen Skin.");
+        return;
+      }
+
+      state.shop.push(id);
+      persist();
+      render();
+      toast("Angebot hinzugefügt");
+    });
 
     function updateTimer() {
       const now = new Date();
       const midnight = new Date(now);
       midnight.setHours(24, 0, 0, 0);
-      const seconds = Math.max(
-        0, Math.floor((midnight - now) / 1000)
-      );
-      const h = String(Math.floor(seconds / 3600)).padStart(2, "0");
-      const m = String(Math.floor((seconds % 3600) / 60)).padStart(2, "0");
-      const s = String(seconds % 60).padStart(2, "0");
-      document.getElementById("timer").textContent = `${h}:${m}:${s}`;
+      const total = Math.max(0, Math.floor((midnight - now) / 1000));
+      const hours = String(Math.floor(total / 3600)).padStart(2, "0");
+      const minutes = String(Math.floor((total % 3600) / 60)).padStart(2, "0");
+      const seconds = String(total % 60).padStart(2, "0");
+      document.getElementById("timer").textContent =
+        `${hours}:${minutes}:${seconds}`;
     }
 
     render();
     updateTimer();
     setInterval(updateTimer, 1000);
+
+    if ("serviceWorker" in navigator && location.protocol === "https:") {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./sw.js").catch(() => {});
+      });
+    }
   </script>
 </body>
 </html>
