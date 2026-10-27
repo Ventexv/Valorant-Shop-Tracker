@@ -1,4 +1,4 @@
-const CACHE_NAME = "valorant-shop-v1";
+const CACHE_NAME = "valorant-shop-v2";
 const FILES_TO_CACHE = [
   "./",
   "./index.html",
